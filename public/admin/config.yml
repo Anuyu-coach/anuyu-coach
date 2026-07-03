@@ -6,10 +6,10 @@
 # ─────────────────────────────────────────────────────────────
 
 backend:
-  name: github
+  name: git-gateway
   # ⚠️ EDIT ME: replace with the GitHub repo you push this site to.
   # e.g. "anuyu/anuyu-coach"
-  repo: YOUR_GITHUB_USER/anuyu-coach
+  repo: anuyu-coach/anuyu-coach
   branch: main
   # OAuth proxy. If you host on Netlify, the simplest path is to enable
   # Netlify Identity + Git Gateway (see README). Otherwise set up the
