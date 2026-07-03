@@ -77,9 +77,9 @@ to `src/content/*.md`. Useful for confirming the admin works before going live.
 ## Step 2 — Push to GitHub
 
 Create a new repo on GitHub (the owner will tell you what to name it; the
-default in this guide is `anuyu-coach`). **Make it public** — this matters
-because the free Sveltia/Decap CMS auth uses Git Gateway, which is simpler with
-public repos. (Private is possible but requires extra setup.)
+default in this guide is `anuyu-coach`). **Public or private both work** —
+Sveltia's GitHub OAuth supports either. (Public is slightly simpler; private
+is fine as long as the editor is a repo collaborator.)
 
 Do **not** initialize the GitHub repo with a README or .gitignore — it's
 already in this folder.
@@ -100,19 +100,18 @@ git push -u origin main
 ## Step 3 — Update `public/admin/config.yml`
 
 Open `public/admin/config.yml` and change the `repo:` line to match the
-GitHub repo you just pushed to:
+GitHub repo you just pushed to. Leave the backend as `github`:
 
 ```yaml
 backend:
-  name: git-gateway      # ← change from "github" to "git-gateway" for Netlify Identity flow
+  name: github
+  repo: OWNER/REPO    # ← e.g. anuyu/anuyu-coach
   branch: main
 ```
 
-> **Why `git-gateway` not `github`?** Git Gateway proxies all CMS commits
-> through Netlify Identity, so editors don't need their own GitHub accounts —
-> they log in with email + password instead. This is what the site owner wants.
-> If for any reason you'd rather have GitHub-account-based auth, leave it as
-> `github` and follow the [Sveltia GitHub OAuth docs](https://github.com/sveltia/sveltia-cms).
+> **Important — Sveltia does NOT support Git Gateway.** Older Decap/Netlify CMS
+> guides tell you to use `name: git-gateway` + Netlify Identity. Sveltia removed
+> that. Use the `github` backend (above) with GitHub OAuth — set up in Step 5.
 
 Commit and push:
 
@@ -139,23 +138,46 @@ git push
 
 ---
 
-## Step 5 — Enable Netlify Identity + Git Gateway
+## Step 5 — Enable the CMS login (GitHub OAuth)
 
-This is what lets the site owner log into the CMS.
+This is what lets the site owner log into the CMS. Sveltia authenticates via
+**GitHub OAuth** (Git Gateway is not supported). The simplest route is to let
+Netlify broker the GitHub login for you — no code to deploy.
 
-1. In the Netlify site dashboard → **Integrations** (older UI: **Identity**) →
-   find **Identity** → **Enable Identity**.
-2. **Identity → Registration preferences** → set to **Invite only**. (Critical
-   — otherwise anyone on the internet can sign up as an editor.)
-3. **Identity → Services → Git Gateway** → **Enable Git Gateway**. Netlify
-   will create a deploy key on the GitHub repo automatically.
-4. **Identity → Invite users** → enter the site owner's email address. They'll
-   get a "You've been invited" email — they click the link, set a password,
-   they're in.
-5. Tell the owner: visit `anuyu.netlify.app/admin` (or the custom domain once
-   set up), log in with the email/password they just made, write a Journal
-   entry as a test, hit Publish. Within ~60 seconds the site rebuilds with
-   the new post.
+**5a. Register a GitHub OAuth App**
+
+1. GitHub → your profile → **Settings → Developer settings → OAuth Apps →
+   New OAuth App**.
+2. Fill in:
+   - **Application name:** `Anuyu CMS`
+   - **Homepage URL:** `https://anuyu.online` (or the `.netlify.app` URL for now)
+   - **Authorization callback URL:** `https://api.netlify.com/auth/done`
+3. **Register application**, then **Generate a new client secret**. Copy the
+   **Client ID** and **Client Secret** — you need them next.
+
+**5b. Add the provider in Netlify**
+
+1. Netlify site dashboard → **Site configuration → Access & security →
+   OAuth** (in some UIs: **Authentication providers**).
+2. **Install provider → GitHub** → paste the **Client ID** and **Client
+   Secret** from 5a → **Install**.
+
+**5c. Test the login**
+
+Visit `anuyu.netlify.app/admin` → click **Sign in with GitHub** → authorize.
+You're in. Write a test Journal entry, hit **Publish**, and the site rebuilds
+in ~60 seconds.
+
+> **Who can log in?** Anyone with **write access to the GitHub repo** can log
+> into the CMS. So to give the site owner access, add them as a **collaborator**
+> on the repo (GitHub repo → Settings → Collaborators). To revoke access, remove
+> them there. There is no separate "invite" step and no email/password — login
+> is their GitHub account.
+
+> **Prefer email/password instead of GitHub accounts?** Then use the alternative
+> auth worker: deploy [`sveltia-cms-auth`](https://github.com/sveltia/sveltia-cms-auth)
+> to Cloudflare Workers (free, ~5 min) and set `base_url` in `config.yml` to the
+> worker URL. But the Netlify+GitHub route above is the least work.
 
 ---
 
@@ -224,7 +246,7 @@ The full editor-side guide is in `README.md` under "For the editor".
 ```
 Editor clicks Publish
         ↓
-Sveltia CMS commits the .md file to GitHub via Git Gateway
+Sveltia CMS commits the .md file to GitHub (via GitHub OAuth)
         ↓
 GitHub webhook fires
         ↓
@@ -269,15 +291,19 @@ mail to addresses like `hello@anuyu.online`.
 → GoDaddy domain forwarding is still on. In GoDaddy → domain settings →
 disable forwarding. Then wait 10 min.
 
-**"Admin page loads but login fails with 'No identity instance found'"**
-→ Identity widget isn't loading. Confirm Identity is enabled in Netlify and
-that `index.html` includes the Netlify Identity widget. (The current setup
-loads it via `public/admin/index.html` — it should "just work".)
+**"CMS error: 'The deprecated Git Gateway backend is not supported in Sveltia CMS'"**
+→ `config.yml` has `name: git-gateway`. Change it to `name: github` (with the
+`repo:` and `branch:` fields), commit, push. Then set up GitHub OAuth per Step 5.
+
+**"Admin page loads but 'Sign in with GitHub' fails / popup closes"**
+→ The GitHub OAuth App or Netlify provider isn't set up correctly. Recheck:
+the callback URL is exactly `https://api.netlify.com/auth/done`, and the Client
+ID/Secret are pasted into Netlify → Access & security → OAuth.
 
 **"CMS shows 'Failed to load entries' after login"**
-→ Git Gateway isn't enabled, OR the `repo:` field in `config.yml` doesn't
-match the actual repo, OR the user logged in with an email that hasn't been
-invited.
+→ The `repo:` field in `config.yml` doesn't match the actual repo, OR the
+logged-in GitHub account doesn't have write access to the repo (add them as a
+collaborator).
 
 **"Build fails on Netlify with 'Cannot find module'"**
 → Make sure `package-lock.json` was committed. If not: `npm install` locally,
@@ -296,14 +322,14 @@ Before you tell the owner it's done, verify:
 - [ ] `anuyu.online` loads the site over HTTPS
 - [ ] `www.anuyu.online` redirects to `anuyu.online` (or vice versa)
 - [ ] All nav links work (Story, Offerings, Journal, Check-in)
-- [ ] `/admin` loads the Sveltia UI
-- [ ] You've sent the owner their Identity invite and confirmed they can log in
-- [ ] You've published a test journal entry as the owner (then deleted it) to
+- [ ] `/admin` loads the Sveltia UI and **Sign in with GitHub** works
+- [ ] The owner's GitHub account is a collaborator on the repo and can log in
+- [ ] You've published a test journal entry (then deleted it) to
       confirm the publish → rebuild flow works end-to-end
 - [ ] Email to `hello@anuyu.online` (or whatever address exists) still works —
       send a test from a personal account
 - [ ] Force HTTPS is on
-- [ ] Registration is set to **Invite only** in Identity settings
+- [ ] `config.yml` backend is `github` (NOT `git-gateway`)
 
 ---
 

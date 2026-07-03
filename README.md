@@ -52,13 +52,16 @@ Pages, Vercel, GitHub Pages, or any static host.
 
 1. Edit `public/admin/config.yml` and set the `repo:` line to your GitHub repo
    (e.g. `anuyu/anuyu-coach`).
-2. Pick an auth strategy:
-   - **Easiest — Netlify Identity**: Host on Netlify, enable Identity + Git
-     Gateway in the Netlify dashboard, invite the editor by email.
-     [Guide](https://decapcms.org/docs/git-gateway-backend/).
-   - **GitHub OAuth**: Create a GitHub OAuth app, deploy a tiny OAuth proxy
-     (Sveltia ships [`sveltia-cms-auth`](https://github.com/sveltia/sveltia-cms-auth)
-     as a Cloudflare Worker template — 5 min setup).
+2. Set up auth — Sveltia uses **GitHub OAuth** (Git Gateway is NOT supported):
+   - **Easiest — Netlify brokers the login**: register a GitHub OAuth App
+     (callback `https://api.netlify.com/auth/done`), then add its Client ID/
+     Secret in Netlify → Site config → Access & security → OAuth. Keep
+     `backend: name: github` in `config.yml`. Editors log in with their
+     GitHub account (must have repo write access).
+   - **Alternative — self-hosted OAuth**: deploy
+     [`sveltia-cms-auth`](https://github.com/sveltia/sveltia-cms-auth) as a
+     Cloudflare Worker (~5 min) and point `base_url` in `config.yml` at it.
+   - See **SETUP.md → Step 5** for the full walkthrough.
 3. Push to the connected branch (`main` by default) — the CMS commits new
    content there.
 
@@ -136,9 +139,11 @@ committed to `public/assets/uploads/` automatically.
 1. Push this repo to GitHub.
 2. Create a new Netlify site from the repo.
 3. Build command: `npm run build` · Publish directory: `dist`
-4. In Site settings → Identity, enable Identity, then Git Gateway.
-5. Invite Anuyu as an editor.
-6. Done — she logs into `anuyu.co/admin` with the invite email.
+4. Set up GitHub OAuth for the CMS: register a GitHub OAuth App (callback
+   `https://api.netlify.com/auth/done`) and add its Client ID/Secret in
+   Netlify → Site config → Access & security → OAuth. (See SETUP.md → Step 5.)
+5. Add Anuyu as a collaborator on the GitHub repo so she can log in.
+6. Done — she logs into `anuyu.online/admin` via **Sign in with GitHub**.
 
 ## Deploying to Cloudflare Pages
 
