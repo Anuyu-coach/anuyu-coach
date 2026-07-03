@@ -1,0 +1,50 @@
+---
+// BaseLayout — wraps every page with <head>, fonts, paper background,
+// the brand nav, and the footer.
+import Nav from "../components/Nav.astro";
+import SiteFooter from "../components/Footer.astro";
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "Anuyu — A Practice for Mind & Life",
+  description = "A slow, deliberate coaching practice for people in transition.",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Work+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="icon" type="image/png" href="/assets/anuyu-mark.png" />
+
+    <!-- image-slot custom element used in My Story portrait. -->
+    <script is:inline src="/assets/image-slot.js"></script>
+  </head>
+  <body>
+    <div id="top"></div>
+    <div class="shell">
+      <Nav />
+      <div class="hairline" style="margin-top:14px;"></div>
+
+      <slot />
+
+      <SiteFooter />
+    </div>
+  </body>
+</html>

@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const entries = await getCollection("journal");
+  return entries
+    .filter((e) => !e.data.draft)
+    .map((entry) => ({
+      params: { slug: entry.id },
+      props: { entry },
+    }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const dateFmt = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+---
+
+<BaseLayout
+  title={`${entry.data.title} · Anuyu Journal`}
+  description={entry.data.summary ?? "From the Anuyu journal."}
+>
+  <article class="post">
+    <a class="post-back" href="/journal">
+      <span aria-hidden="true">←</span> Back to journal
+    </a>
+    <header>
+      <div class="date">{dateFmt.format(entry.data.date)}</div>
+      <h1>{entry.data.title}</h1>
+      {entry.data.summary && <p class="summary">{entry.data.summary}</p>}
+    </header>
+
+    {entry.data.cover && (
+      <img src={entry.data.cover} alt="" style="width:100%; border:1px solid var(--rule); margin-bottom: 32px;" />
+    )}
+
+    <div class="post-body">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>

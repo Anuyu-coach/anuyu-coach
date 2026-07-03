@@ -1,0 +1,60 @@
+---
+// JournalPreview — shows the latest published journal entry on the homepage
+// + a link to read all entries. Pulls from the journal content collection.
+import { getCollection } from "astro:content";
+
+const entries = (await getCollection("journal"))
+  .filter((e) => !e.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 1); // just the most recent
+
+const dateFmt = new Intl.DateTimeFormat("en-GB", {
+  month: "long",
+  year: "numeric",
+});
+
+// rough reading-time estimate (220 wpm)
+function readingTime(entry: (typeof entries)[number]) {
+  const words = (entry.body ?? "").split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 220));
+}
+---
+
+<section id="journal" class="section">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">03 — Journal</div>
+    </div>
+    <h2>Field notes from the practice.</h2>
+  </div>
+
+  {
+    entries.length === 0 ? (
+      <p style="color:var(--ink-soft); padding: 16px 0;">
+        The first entry is on the way.
+      </p>
+    ) : (
+      <div class="journal-list" style="border-top: 1px solid var(--rule);">
+        {entries.map((entry) => (
+          <a class="journal-entry" href={`/journal/${entry.id}`}>
+            <span class="date">
+              {dateFmt.format(entry.data.date)}
+              <span class="read-time">{readingTime(entry)} min read</span>
+            </span>
+            <span>
+              <span class="entry-title">{entry.data.title}</span>
+              {entry.data.summary && (
+                <span class="entry-summary">{entry.data.summary}</span>
+              )}
+            </span>
+            <span class="arrow" aria-hidden="true">→</span>
+          </a>
+        ))}
+      </div>
+    )
+  }
+
+  <div style="margin-top: 36px; display: flex; justify-content: flex-end;">
+    <a class="btn btn-ghost" href="/journal">Read all entries</a>
+  </div>
+</section>

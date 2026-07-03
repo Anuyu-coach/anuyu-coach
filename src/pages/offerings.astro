@@ -1,0 +1,123 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCollection, render } from "astro:content";
+
+const offerings = (await getCollection("offerings")).sort(
+  (a, b) => a.data.order - b.data.order
+);
+
+// pre-render each offering's markdown body
+const offeringsRendered = await Promise.all(
+  offerings.map(async (entry) => {
+    const { Content } = await render(entry);
+    return { entry, Content };
+  })
+);
+
+function slugify(s: string) {
+  return s.toLowerCase().replace(/[^\w]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+const threeCol = offerings.length === 3;
+---
+
+<BaseLayout
+  title="Offerings · Anuyu"
+  description="Three ways to begin the work together: single sessions, the 28-day A New You programme, and a free hello."
+>
+
+  <!-- ===== offerings header ===== -->
+  <header class="journal-head">
+    <div class="eyebrow">Offerings</div>
+    <h1>Three ways to <span class="ital">begin the work</span> together.</h1>
+    <p class="blurb">
+      Whether you need one good conversation, a deep 28-day journey, or
+      just a place to start. Choose the offering that meets you where
+      you are.
+    </p>
+  </header>
+
+  <!-- ===== full offerings list ===== -->
+  <section class="section" style="padding-top: 48px;">
+    <div class={`services ${threeCol ? "three" : ""}`}>
+      {
+        offeringsRendered.map(({ entry, Content }) => (
+          <article
+            class={`svc ${entry.data.featured ? "svc-featured" : ""}`}
+            id={slugify(entry.data.title)}
+          >
+            <div class="svc-head">
+              <div class="eyebrow">{entry.data.eyebrow}</div>
+              <div class="price">{entry.data.price}</div>
+            </div>
+            <h3>{entry.data.title}</h3>
+            <Content />
+            <ul>
+              {entry.data.bullets.map((b) => (
+                <li>{b}</li>
+              ))}
+            </ul>
+            <a class="more" href={`mailto:anuyu.coach@gmail.com?subject=Re: ${entry.data.title}`}>{entry.data.cta}</a>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- ===== what to expect ===== -->
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">What to expect</div>
+      </div>
+      <h2>How the work actually unfolds.</h2>
+    </div>
+
+    <div class="pillars">
+      <article class="pillar">
+        <div class="num">i.</div>
+        <h3>The consult</h3>
+        <p>We start with thirty minutes, free. You tell me where you are. I tell you whether I'm the right person for it. If I'm not, I help you find who is.</p>
+      </article>
+      <article class="pillar">
+        <div class="num">ii.</div>
+        <h3>The first session</h3>
+        <p>Slower than you expect. We are not building a plan in the first hour. We are listening for what is actually true. Most clients leave the first session with one quiet sentence to carry.</p>
+      </article>
+      <article class="pillar">
+        <div class="num">iii.</div>
+        <h3>Between sessions</h3>
+        <p>I send a short note after every session. You don't have to reply. The work, mostly, happens in the in-between: on walks, in the shower, in the silence after putting the kids down.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ===== closing CTA ===== -->
+  <section class="section" style="border-top: 1px solid var(--rule); padding: 64px 0 32px;">
+    <div class="post-bottom" style="margin: 0 auto; max-width: none;">
+
+      <div class="bottom-card">
+        <div class="bottom-eyebrow">Begin</div>
+        <h3>Not sure which offering <span class="ital">fits your season?</span></h3>
+        <p>Begin with a quiet check-in. Ten short questions to show me where you are right now. I'll write back personally within a few days.</p>
+        <a class="btn btn-primary" href="/check-in">
+          Get Your Free Personalized Assessment
+          <span class="btn-arrow" aria-hidden="true"></span>
+        </a>
+        <p style="margin-top: 18px; font-size: 13px; color: var(--ink-faint);">
+          Or, if you'd rather just write,
+          <a href="mailto:anuyu.coach@gmail.com" style="color: var(--ink); border-bottom: 1px solid var(--rule);">say hello at anuyu.coach@gmail.com</a>.
+        </p>
+      </div>
+
+      <div class="bottom-card">
+        <div class="bottom-eyebrow">Read more</div>
+        <h3>About the <span class="ital">person across the chair.</span></h3>
+        <p>How I came to coaching, what I believe about the work, and what guides the practice now.</p>
+        <a class="btn btn-ghost" href="/story">Read my story</a>
+      </div>
+
+    </div>
+  </section>
+
+</BaseLayout>

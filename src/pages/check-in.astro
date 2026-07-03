@@ -1,0 +1,341 @@
+---
+// Check-in — a 10-question self-connection quiz with archetype results.
+// On finish, sends the answers to Anu via Web3Forms (free unlimited tier).
+//
+// ⚠️ Before going live, edit Check-in.html OR the inline <script> below
+// and replace `REPLACE_WITH_WEB3FORMS_ACCESS_KEY` with a real access key
+// from web3forms.com.
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="A check-in · Anuyu"
+  description="A short, gentle self-connection check-in. Ten quiet questions to see where you are right now."
+>
+  <section class="quiz" aria-label="Self-connection check-in">
+    <div class="quiz-card" id="quizCard">
+
+      <!-- Step: intro -->
+      <div class="quiz-step active" data-step="intro">
+        <div class="eyebrow">A quiet check-in</div>
+        <h1>What's blocking your <span class="ital">self-connection?</span></h1>
+        <p class="lede">
+          Ten short questions. There are no right answers, only honest ones.
+          Take your time.
+        </p>
+        <p class="note">
+          When you finish, you'll receive a short reflection on where you
+          are right now. Anu will see your answers and reach out personally
+          within a few days.
+        </p>
+        <button class="btn btn-primary" type="button" data-action="start">
+          Begin
+          <span class="btn-arrow" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <!-- Step: name + email -->
+      <div class="quiz-step" data-step="details">
+        <div class="eyebrow">First, the basics</div>
+        <h2>So I know where to write back.</h2>
+        <div class="quiz-fields">
+          <label>
+            Your name
+            <input type="text" id="quizName" placeholder="What may I call you?" autocomplete="given-name" required />
+          </label>
+          <label>
+            Your email
+            <input type="email" id="quizEmail" placeholder="your@email.com" autocomplete="email" required />
+          </label>
+        </div>
+        <div class="quiz-nav">
+          <button class="back" type="button" data-action="back">← Back</button>
+          <div class="spacer"></div>
+          <button class="btn btn-primary" type="button" data-action="start-questions">
+            Continue
+            <span class="btn-arrow" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step: question (rendered dynamically) -->
+      <div class="quiz-step" data-step="question" id="questionStep">
+        <div class="quiz-progress">
+          <span class="step-num">Question <span id="qNum">01</span> of 10</span>
+          <span class="step-bar" id="qBar" style="--progress: 10%"></span>
+        </div>
+        <h2 id="qTitle">…</h2>
+        <ul class="quiz-options" id="qOptions" role="radiogroup" aria-labelledby="qTitle"></ul>
+        <div class="quiz-nav">
+          <button class="back" type="button" data-action="back">← Back</button>
+        </div>
+      </div>
+
+      <!-- Step: result -->
+      <div class="quiz-step result-step" data-step="result">
+        <div class="result-archetype">Your check-in</div>
+        <h1 class="result-name" id="rName">…</h1>
+        <p class="result-subtitle" id="rSubtitle">…</p>
+        <div class="result-body" id="rBody"></div>
+        <div class="result-actions" id="rActions"></div>
+        <p class="result-confirm" id="rConfirm">
+          Your answers are on their way to Anu. She'll reach out personally
+          within a few days.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <noscript>
+    <p style="text-align:center; padding: 60px 20px; font-family: 'Cormorant Garamond', serif; font-style: italic; color: #2b2823;">
+      The check-in is interactive and needs JavaScript enabled.<br/>
+      If you'd rather skip it, please write to
+      <a href="mailto:anuyu.coach@gmail.com" style="color: #684331;">anuyu.coach@gmail.com</a>.
+    </p>
+  </noscript>
+</BaseLayout>
+
+<script is:inline>
+/* ============================================================
+   Anuyu — Self-Connection Check-in
+   Identical logic to the standalone Check-in.html. See that file
+   for the full annotated source if you want to fork or extend it.
+   ============================================================ */
+(function () {
+  const WEB3FORMS_ACCESS_KEY = 'a2637712-2aa5-404a-9465-92be74420f23';
+
+  const QUESTIONS = [
+    { q: "What's actually true right now?", options: [
+      { text: "I'm carrying a heaviness I can't quite name", type: 'dd' },
+      { text: "I'm tired, but mostly functional", type: 'ba' },
+      { text: "I feel… not much at all", type: 'nn' },
+      { text: "I'm in something real, and I'm curious", type: 'es' }] },
+    { q: "How do you respond to discomfort or change?", options: [
+      { text: "I sit with it, but feel lost", type: 'dd' },
+      { text: "I stay busy and push through", type: 'ba' },
+      { text: "I shut down completely", type: 'nn' },
+      { text: "I notice it, and try to be honest about it", type: 'es' }] },
+    { q: "Which feels most dominant lately?", options: [
+      { text: "Sadness, or a heaviness I can't place", type: 'dd' },
+      { text: "Overwhelm — never enough hours", type: 'ba' },
+      { text: "Numbness, like everything is muted", type: 'nn' },
+      { text: "Curiosity, mixed with not-knowing", type: 'es' }] },
+    { q: "When you're alone with yourself, you…", options: [
+      { text: "Feel a quiet grief", type: 'dd' },
+      { text: "Reach for distraction — scroll, work, eat", type: 'ba' },
+      { text: "Don't really feel yourself anymore", type: 'nn' },
+      { text: "Hear something honest, even if it's hard", type: 'es' }] },
+    { q: "What does your body do under stress?", options: [
+      { text: "Aches in places I can't explain", type: 'dd' },
+      { text: "Tenses, but I push through", type: 'ba' },
+      { text: "Goes quiet — I don't notice", type: 'nn' },
+      { text: "I feel it, name it, work with it", type: 'es' }] },
+    { q: "The story you tell yourself most often is…", options: [
+      { text: '"I don\'t know who I am anymore"', type: 'dd' },
+      { text: '"I should be doing more"', type: 'ba' },
+      { text: '"I\'m fine" — when you\'re not', type: 'nn' },
+      { text: '"I\'m enough, even on the hard days"', type: 'es' }] },
+    { q: "The last time something difficult happened, you…", options: [
+      { text: "Are still in it", type: 'dd' },
+      { text: "Distracted yourself until it passed", type: 'ba' },
+      { text: "Numbed out and waited for it to end", type: 'nn' },
+      { text: "Talked it through, slowly", type: 'es' }] },
+    { q: "How connected do you feel to your true self?", options: [
+      { text: "A little, but I'm unsure who that self is now", type: 'dd' },
+      { text: "I lost myself somewhere in my schedule", type: 'ba' },
+      { text: "Completely disconnected", type: 'nn' },
+      { text: "I'm on my way back to myself", type: 'es' }] },
+    { q: "What you're really tired of is…", options: [
+      { text: "Not knowing what I want", type: 'dd' },
+      { text: "Performing being okay", type: 'ba' },
+      { text: "Feeling nothing", type: 'nn' },
+      { text: "Surviving instead of living", type: 'es' }] },
+    { q: "What kind of support would feel most helpful right now?", options: [
+      { text: "Gentle space to process", type: 'dd' },
+      { text: "A plan to move forward", type: 'ba' },
+      { text: "Tools to reconnect with myself", type: 'nn' },
+      { text: "A guide to walk beside me", type: 'es' }] },
+  ];
+
+  const ARCHETYPES = {
+    dd: { code: 'dd', name: 'The Disconnected Dreamer',
+      subtitle: 'You are not lost. You are in a fog.',
+      body: [
+        "There is a quiet grief living in your days right now, and a sense that you used to know yourself better than you do today. You haven't lost yourself — you just can't see clearly through what's in front of you.",
+        "The work for you isn't more clarity, more journaling, more searching. It's slower than that. It's letting what's heavy be heavy, long enough that the fog starts to lift on its own.",
+      ],
+      cta: { label: "Begin with Let's say hello", href: '/offerings#lets-say-hello' },
+      secondary: null },
+    ba: { code: 'ba', name: 'The Busy Avoider',
+      subtitle: "You haven't lost yourself. You've outrun yourself.",
+      body: [
+        "You are very, very good at being okay. You have a calendar, a system, a plan for everything. You are also, quietly, exhausted — because the cost of performing okay is that the real you keeps getting put off until later.",
+        "The work for you isn't another system. It's permission to stop. To sit, just for an hour, with the part of you that's been waiting at the back of your own life.",
+      ],
+      cta: { label: 'Begin A New You', href: '/offerings#a-new-you' },
+      secondary: { text: 'or, if a single conversation feels right first,', linkLabel: 'try The Untangle', href: '/offerings#the-untangle' } },
+    nn: { code: 'nn', name: 'The Numb Navigator',
+      subtitle: "You're not broken. You went somewhere safe.",
+      body: [
+        "Numbness isn't an absence. It's a wisdom — a part of you that learned, long ago, that feeling everything was too much. So you stopped. That kept you alive. And now, gently, it's time to come back.",
+        "The work for you isn't more thinking. It's thawing. Reconnecting to your body. Letting yourself feel one small thing at a time, in a room safe enough to hold it.",
+      ],
+      cta: { label: 'Begin A New You', href: '/offerings#a-new-you' },
+      secondary: { text: "or, if you'd rather start gently,", linkLabel: "say hello first", href: '/offerings#lets-say-hello' } },
+    es: { code: 'es', name: 'The Emerging Self-Seeker',
+      subtitle: 'Something in you is already turning.',
+      body: [
+        "You are not lost. You are arriving. You can feel it: the curiosity, the readiness, the sense that the next version of you is already underway, even if you can't fully see it yet.",
+        "The work for you is to give that arrival room. To not rush past it. To find someone who can walk beside you, honestly, while you become.",
+      ],
+      cta: { label: 'Begin A New You', href: '/offerings#a-new-you' },
+      secondary: { text: 'or, if a single conversation calls,', linkLabel: 'try The Untangle', href: '/offerings#the-untangle' } },
+  };
+  const TIE_ORDER = ['es', 'dd', 'nn', 'ba'];
+
+  const state = { name: '', email: '', questionIndex: 0, answers: [], history: ['intro'] };
+
+  const $card     = document.getElementById('quizCard');
+  const $steps    = $card.querySelectorAll('.quiz-step');
+  const $qNum     = document.getElementById('qNum');
+  const $qBar     = document.getElementById('qBar');
+  const $qTitle   = document.getElementById('qTitle');
+  const $qOptions = document.getElementById('qOptions');
+  const $rName    = document.getElementById('rName');
+  const $rSub     = document.getElementById('rSubtitle');
+  const $rBody    = document.getElementById('rBody');
+  const $rActions = document.getElementById('rActions');
+  const $name     = document.getElementById('quizName');
+  const $email    = document.getElementById('quizEmail');
+
+  function showStep(name) {
+    $steps.forEach(s => s.classList.toggle('active', s.dataset.step === name));
+    const top = $card.getBoundingClientRect().top + window.scrollY - 60;
+    if (window.scrollY > top) window.scrollTo({ top, behavior: 'smooth' });
+  }
+  function goTo(name) {
+    if (state.history[state.history.length - 1] !== name) state.history.push(name);
+    showStep(name);
+  }
+  function goBack() {
+    if (state.history.length <= 1) return;
+    state.history.pop();
+    const prev = state.history[state.history.length - 1];
+    if (prev === 'question' && state.questionIndex > 0) {
+      state.questionIndex--;
+      renderQuestion();
+    }
+    showStep(prev);
+  }
+  function renderQuestion() {
+    const q = QUESTIONS[state.questionIndex];
+    $qNum.textContent = String(state.questionIndex + 1).padStart(2, '0');
+    $qBar.style.setProperty('--progress', `${((state.questionIndex + 1) / QUESTIONS.length) * 100}%`);
+    $qTitle.textContent = q.q;
+    $qOptions.innerHTML = '';
+    q.options.forEach((opt, i) => {
+      const id = `q${state.questionIndex}_${i}`;
+      const li = document.createElement('li');
+      li.className = 'quiz-option';
+      li.innerHTML = `
+        <input type="radio" name="q${state.questionIndex}" value="${opt.type}" id="${id}" data-text="${esc(opt.text)}" />
+        <label for="${id}">${esc(opt.text)}</label>`;
+      $qOptions.appendChild(li);
+    });
+    const existing = state.answers[state.questionIndex];
+    if (existing) {
+      const input = $qOptions.querySelector(`input[value="${existing.type}"]`);
+      if (input) input.checked = true;
+    }
+    let pending = false;
+    $qOptions.querySelectorAll('input').forEach(input => {
+      input.addEventListener('click', () => {
+        if (pending) return;
+        input.checked = true;
+        state.answers[state.questionIndex] = { q: q.q, choice: input.dataset.text, type: input.value };
+        pending = true;
+        setTimeout(advance, 480);
+      });
+    });
+  }
+  function advance() {
+    if (state.questionIndex < QUESTIONS.length - 1) {
+      state.questionIndex++;
+      state.history.push('question');
+      renderQuestion();
+      showStep('question');
+    } else finish();
+  }
+  function score() {
+    const c = { dd: 0, ba: 0, nn: 0, es: 0 };
+    for (const a of state.answers) if (a && c.hasOwnProperty(a.type)) c[a.type]++;
+    const max = Math.max(...Object.values(c));
+    return { archetype: TIE_ORDER.filter(k => c[k] === max)[0], counts: c };
+  }
+  function finish() {
+    const result = score();
+    const a = ARCHETYPES[result.archetype];
+    $rName.textContent = a.name;
+    $rSub.textContent = a.subtitle;
+    $rBody.innerHTML = a.body.map(p => `<p>${esc(p)}</p>`).join('');
+    let html = `<a class="btn btn-primary" href="${a.cta.href}">${esc(a.cta.label)} <span class="btn-arrow" aria-hidden="true"></span></a>`;
+    if (a.secondary) html += ` <span class="result-secondary">${esc(a.secondary.text)} <a href="${a.secondary.href}">${esc(a.secondary.linkLabel)}</a>.</span>`;
+    $rActions.innerHTML = html;
+    state.history.push('result');
+    showStep('result');
+    submit(result, a);
+  }
+  function submit(result, archetype) {
+    if (!WEB3FORMS_ACCESS_KEY || WEB3FORMS_ACCESS_KEY.startsWith('REPLACE_')) return;
+    const payload = {
+      access_key: WEB3FORMS_ACCESS_KEY,
+      subject: `New self-connection check-in from ${state.name}`,
+      from_name: state.name, reply_to: state.email,
+      name: state.name, email: state.email,
+      archetype_code: archetype.code,
+      archetype_name: archetype.name,
+      archetype_subtitle: archetype.subtitle,
+      scores: JSON.stringify(result.counts),
+      submitted_at: new Date().toISOString(),
+    };
+    state.answers.forEach((a, i) => {
+      const n = String(i + 1).padStart(2, '0');
+      payload[`Q${n}_question`] = a.q;
+      payload[`Q${n}_answer`] = a.choice;
+    });
+    fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(err => console.warn('[Anuyu check-in] submission failed', err));
+  }
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  }
+
+  $card.addEventListener('click', (e) => {
+    const action = e.target.closest('[data-action]')?.dataset.action;
+    if (!action) return;
+    if (action === 'start') { goTo('details'); setTimeout(() => $name.focus(), 500); }
+    if (action === 'back') goBack();
+    if (action === 'start-questions') {
+      const name = $name.value.trim(), email = $email.value.trim();
+      if (!name) { $name.focus(); return; }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { $email.focus(); return; }
+      state.name = name; state.email = email;
+      state.questionIndex = 0; state.answers = [];
+      renderQuestion(); goTo('question');
+    }
+  });
+  [$name, $email].forEach(input => {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        $card.querySelector('[data-action="start-questions"]').click();
+      }
+    });
+  });
+})();
+</script>

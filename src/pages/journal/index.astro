@@ -1,0 +1,51 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+// Only published, sorted newest first.
+const entries = (await getCollection("journal"))
+  .filter((e) => !e.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const dateFmt = new Intl.DateTimeFormat("en-GB", {
+  month: "long",
+  year: "numeric",
+});
+---
+
+<BaseLayout
+  title="Journal · Anuyu"
+  description="Field notes from the practice."
+>
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Journal</div>
+      </div>
+      <h2>Field notes from the practice.</h2>
+    </div>
+
+    {
+      entries.length === 0 ? (
+        <p style="color:var(--ink-soft); padding: 16px 0;">
+          No entries yet. The first one is on the way.
+        </p>
+      ) : (
+        <div class="journal-list">
+          {entries.map((entry) => (
+            <a class="journal-entry" href={`/journal/${entry.id}`}>
+              <span class="date">{dateFmt.format(entry.data.date)}</span>
+              <span>
+                <span class="entry-title">{entry.data.title}</span>
+                {entry.data.summary && (
+                  <span class="entry-summary">{entry.data.summary}</span>
+                )}
+              </span>
+              <span class="arrow" aria-hidden="true">→</span>
+            </a>
+          ))}
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>

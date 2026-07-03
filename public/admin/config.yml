@@ -1,0 +1,118 @@
+# ─────────────────────────────────────────────────────────────
+#  Anuyu CMS — Sveltia configuration
+#  Edited content is committed back to this Git repo. Sveltia is
+#  drop-in compatible with the Decap config format, so anything in
+#  the Decap docs works here too.
+# ─────────────────────────────────────────────────────────────
+
+backend:
+  name: github
+  # ⚠️ EDIT ME: replace with the GitHub repo you push this site to.
+  # e.g. "anuyu/anuyu-coach"
+  repo: YOUR_GITHUB_USER/anuyu-coach
+  branch: main
+  # OAuth proxy. If you host on Netlify, the simplest path is to enable
+  # Netlify Identity + Git Gateway (see README). Otherwise set up the
+  # built-in GitHub OAuth (Sveltia handles this directly).
+
+# Allow running the CMS locally with `npm run cms` (decap-server).
+# See the editor guide in README.md.
+local_backend: true
+
+# Where uploaded media lives in the repo and how to reference it in
+# generated markdown links.
+media_folder: "public/assets/uploads"
+public_folder: "/assets/uploads"
+
+site_url: https://anuyu.co
+display_url: https://anuyu.co
+logo_url: /assets/anuyu-mark.png
+
+# ───────────── Collections ─────────────
+collections:
+
+  # ─── Journal ────────────────────────────
+  - name: "journal"
+    label: "Journal"
+    label_singular: "Journal Entry"
+    description: "Long-form notes from the practice. Published when 'Draft' is off."
+    folder: "src/content/journal"
+    create: true
+    delete: true
+    slug: "{{year}}-{{month}}-{{slug}}"
+    extension: "md"
+    format: "frontmatter"
+    sortable_fields: ["date", "title"]
+    view_filters:
+      - label: "Drafts"
+        field: draft
+        pattern: true
+      - label: "Published"
+        field: draft
+        pattern: false
+    fields:
+      - { label: "Title",   name: "title",   widget: "string" }
+      - { label: "Publish Date", name: "date", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false, picker_utc: false }
+      - { label: "Summary (shown on the index)", name: "summary", widget: "text", required: false }
+      - { label: "Cover Image", name: "cover", widget: "image", required: false, hint: "Optional. Shown at the top of the post." }
+      - { label: "Draft",   name: "draft",   widget: "boolean", default: false, hint: "If on, the post is hidden from the live site." }
+      - { label: "Body",    name: "body",    widget: "markdown" }
+
+  # ─── Letters (testimonials) ─────────────
+  - name: "letters"
+    label: "Letters"
+    label_singular: "Letter"
+    description: "Client testimonials shown on the homepage."
+    folder: "src/content/letters"
+    create: true
+    delete: true
+    slug: "{{fields.order}}-{{slug}}"
+    extension: "md"
+    format: "frontmatter"
+    sortable_fields: ["order", "name"]
+    fields:
+      - { label: "Order (lower = earlier)", name: "order", widget: "number", value_type: "int", min: 0, default: 1 }
+      - { label: "Name (e.g. Priya R.)", name: "name", widget: "string" }
+      - { label: "Role", name: "role", widget: "string", required: false, hint: "e.g. 'Product lead'" }
+      - {
+          label: "Offering",
+          name: "container",
+          widget: "select",
+          options:
+            [
+              "The Untangle",
+              "A New You",
+              "Let's say hello",
+            ],
+        }
+      - { label: "Season (e.g. Spring '25)", name: "season", widget: "string" }
+      - { label: "Featured?", name: "featured", widget: "boolean", default: false, hint: "If on, this letter appears as the centered hero quote above the grid. Only one letter should be featured at a time." }
+      - { label: "Letter (the quote)", name: "body", widget: "markdown", hint: "The text of the testimonial." }
+
+  # ─── Offerings (services) ───────────────
+  - name: "offerings"
+    label: "Offerings"
+    label_singular: "Offering"
+    description: "The offerings shown on the homepage."
+    folder: "src/content/offerings"
+    create: true
+    delete: true
+    slug: "{{fields.order}}-{{slug}}"
+    extension: "md"
+    format: "frontmatter"
+    sortable_fields: ["order", "title"]
+    fields:
+      - { label: "Order", name: "order", widget: "number", value_type: "int", min: 1, default: 1 }
+      - { label: "Eyebrow (e.g. 'A · Single session')", name: "eyebrow", widget: "string" }
+      - { label: "Title (e.g. 'The Untangle')", name: "title", widget: "string" }
+      - { label: "Price (e.g. 'CHF 150' or 'Free')", name: "price", widget: "string" }
+      - { label: "Featured? (subtle highlight + 'Most chosen' badge)", name: "featured", widget: "boolean", default: false }
+      - { label: "Summary (1 line — shown on the homepage preview)", name: "summary", widget: "text" }
+      - { label: "CTA button text", name: "cta", widget: "string", default: "Book a session" }
+      - {
+          label: "Bullets",
+          name: "bullets",
+          widget: "list",
+          field: { label: "Bullet", name: "bullet", widget: "string" },
+        }
+      - { label: "Description (long, multi-paragraph — shown on dedicated offerings page)", name: "body", widget: "markdown" }

@@ -1,0 +1,46 @@
+---
+// Offerings — homepage PREVIEW (trimmed cards linking to dedicated page).
+// Full offerings page (with bullets + "what to expect") lives at
+// src/pages/offerings.astro.
+import { getCollection } from "astro:content";
+
+const offerings = (await getCollection("offerings")).sort(
+  (a, b) => a.data.order - b.data.order
+);
+
+function slugify(s: string) {
+  return s.toLowerCase().replace(/[^\w]+/g, "-").replace(/(^-|-$)/g, "");
+}
+---
+
+<section id="work" class="section">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">02 — Offerings</div>
+    </div>
+    <h2>Three ways to begin the work together.</h2>
+  </div>
+
+  <div class={`services ${offerings.length === 3 ? "three" : ""}`}>
+    {
+      offerings.map((entry) => (
+        <a
+          class={`svc svc-compact ${entry.data.featured ? "svc-featured" : ""}`}
+          href={`/offerings#${slugify(entry.data.title)}`}
+        >
+          <div class="svc-head">
+            <div class="eyebrow">{entry.data.eyebrow}</div>
+            <div class="price">{entry.data.price}</div>
+          </div>
+          <h3>{entry.data.title}</h3>
+          <p class="svc-summary">{entry.data.summary}</p>
+          <div class="svc-foot">Read more</div>
+        </a>
+      ))
+    }
+  </div>
+
+  <div style="margin-top: 36px; display: flex; justify-content: flex-end;">
+    <a class="btn btn-ghost" href="/offerings">Explore all offerings</a>
+  </div>
+</section>

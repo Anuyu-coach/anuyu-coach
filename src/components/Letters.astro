@@ -1,0 +1,187 @@
+---
+// Letters — carousel of all testimonials at the top, then the three
+// most recent in an equal-size grid below.
+import { getCollection, render } from "astro:content";
+
+const all = (await getCollection("letters"))
+  .filter((l) => !l.data.featured) // featured used to be a single hero quote; we now carousel everything
+  .sort((a, b) => a.data.order - b.data.order);
+
+// All letters go into the carousel (in order)
+const carouselRendered = await Promise.all(
+  all.map(async (entry) => {
+    const { Content } = await render(entry);
+    return { entry, Content };
+  })
+);
+
+// Grid below shows only the 3 most recent (highest order numbers)
+const recentRendered = carouselRendered.slice(-3).reverse();
+---
+
+<section id="letters" class="section letters-section">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">04 · Letters</div>
+    </div>
+    <h2>What clients have written, after.</h2>
+  </div>
+
+  {/* ─── carousel: all letters, one at a time ─── */}
+  <div class="letter-carousel" aria-roledescription="carousel" aria-label="Client letters">
+
+    <button class="carousel-arrow carousel-prev" type="button" aria-label="Previous letter">
+      <span aria-hidden="true">←</span>
+    </button>
+
+    <div class="carousel-viewport" aria-live="polite">
+      {
+        carouselRendered.map(({ entry, Content }, index) => (
+          <figure
+            class={`letter-slide ${index === 0 ? "active" : ""}`}
+            data-slide={index}
+          >
+            <div class="slide-head">
+              <span class="eyebrow">No. {String(index + 1).padStart(2, "0")}</span>
+            </div>
+            <blockquote>
+              <Content />
+            </blockquote>
+            <figcaption>
+              <span class="who-name">{entry.data.name}</span>
+              <span class="who-role">
+                {entry.data.role}
+                {entry.data.role && entry.data.container ? " · " : ""}
+                {entry.data.container}
+              </span>
+            </figcaption>
+          </figure>
+        ))
+      }
+    </div>
+
+    <button class="carousel-arrow carousel-next" type="button" aria-label="Next letter">
+      <span aria-hidden="true">→</span>
+    </button>
+
+    <div class="carousel-dots" role="tablist" aria-label="Letter navigation">
+      {
+        carouselRendered.map((_, index) => (
+          <button
+            class={`dot ${index === 0 ? "active" : ""}`}
+            type="button"
+            data-dot={index}
+            aria-label={`Letter ${index + 1}`}
+          ></button>
+        ))
+      }
+    </div>
+
+  </div>
+
+  {/* ─── recent three (equal-size cards) ─── */}
+  <div class="letters-recent-head">
+    <div class="eyebrow">
+      <span class="orn" aria-hidden="true"></span>
+      The most recent
+      <span class="orn" aria-hidden="true"></span>
+    </div>
+  </div>
+
+  <div class="letters letters-grid-3">
+    {
+      recentRendered.map(({ entry, Content }, idx) => {
+        // Each recent card shows its position in the full carousel
+        // (i.e. its 1-based "No." number based on the full collection length)
+        const carouselIndex = carouselRendered.length - idx;
+        return (
+          <figure class="letter">
+            <div class="letter-head">
+              <span class="eyebrow">No. {String(carouselIndex).padStart(2, "0")}</span>
+            </div>
+            <blockquote>
+              <Content />
+            </blockquote>
+            <figcaption>
+              <span class="who-name">{entry.data.name}</span>
+              <span class="who-role">
+                {entry.data.role}
+                {entry.data.role && entry.data.container ? " · " : ""}
+                {entry.data.container}
+              </span>
+            </figcaption>
+          </figure>
+        );
+      })
+    }
+  </div>
+</section>
+
+<style>
+  /* multi-paragraph letter bodies — keep small breath between paragraphs */
+  .letter blockquote :global(p),
+  .letter-slide blockquote :global(p) {
+    margin: 0 0 .8em;
+  }
+  .letter blockquote :global(p:last-child),
+  .letter-slide blockquote :global(p:last-child) {
+    margin-bottom: 0;
+  }
+</style>
+
+<script>
+  // ─── letter carousel ─────────────────────────────────────
+  // Soft fade between slides; auto-advance every 8s; pause on hover.
+  (function () {
+    const root = document.querySelector(".letter-carousel");
+    if (!root) return;
+    const slides = root.querySelectorAll(".letter-slide");
+    const dots = root.querySelectorAll(".carousel-dots .dot");
+    const prev = root.querySelector(".carousel-prev");
+    const next = root.querySelector(".carousel-next");
+    let current = 0;
+    let timer = null;
+    const DURATION = 8000;
+
+    function show(i) {
+      current = (i + slides.length) % slides.length;
+      slides.forEach((s, idx) => s.classList.toggle("active", idx === current));
+      dots.forEach((d, idx) => d.classList.toggle("active", idx === current));
+    }
+    function start() {
+      stop();
+      timer = setInterval(() => show(current + 1), DURATION);
+    }
+    function stop() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+    function restart() {
+      start();
+    }
+
+    prev?.addEventListener("click", () => {
+      show(current - 1);
+      restart();
+    });
+    next?.addEventListener("click", () => {
+      show(current + 1);
+      restart();
+    });
+    dots.forEach((d, idx) =>
+      d.addEventListener("click", () => {
+        show(idx);
+        restart();
+      })
+    );
+
+    root.addEventListener("mouseenter", stop);
+    root.addEventListener("mouseleave", start);
+
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      start();
+    }
+  })();
+</script>
