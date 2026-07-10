@@ -120,6 +120,62 @@ body::before{
 }
 .nav-cta:hover{ background: var(--sage-deep); border-color: var(--sage-deep); color: var(--paper-tint) !important; }
 
+/* ===== mobile nav (hamburger) ===== */
+.nav-toggle-cb,
+.nav-toggle{ display: none; }
+
+@media (max-width: 720px){
+  .nav{ flex-wrap: wrap; align-items: center; }
+  .brand-tag{ display: none; }
+
+  .nav-toggle{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px; height: 44px;
+    margin-right: -10px;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .nav-toggle-bar,
+  .nav-toggle-bar::before,
+  .nav-toggle-bar::after{
+    content: "";
+    display: block;
+    width: 22px; height: 1.5px;
+    background: currentColor;
+    transition: transform .25s ease, background-color .2s ease;
+  }
+  .nav-toggle-bar{ position: relative; }
+  .nav-toggle-bar::before{ position: absolute; left: 0; top: -7px; }
+  .nav-toggle-bar::after{ position: absolute; left: 0; top: 7px; }
+
+  .nav ul{
+    display: none;
+    flex-basis: 100%;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 14px;
+    padding-top: 8px;
+    border-top: 1px solid var(--rule);
+  }
+  .nav ul a{ display: block; padding: 12px 2px; font-size: 15px; }
+
+  .nav > .nav-cta{ display: none; }
+
+  /* open state */
+  .nav:has(.nav-toggle-cb:checked) ul{ display: flex; }
+  .nav:has(.nav-toggle-cb:checked) > .nav-cta{
+    display: block;
+    flex-basis: 100%;
+    margin-top: 14px;
+    text-align: center;
+  }
+  .nav:has(.nav-toggle-cb:checked) .nav-toggle-bar{ background: transparent; }
+  .nav:has(.nav-toggle-cb:checked) .nav-toggle-bar::before{ transform: translateY(7px) rotate(45deg); }
+  .nav:has(.nav-toggle-cb:checked) .nav-toggle-bar::after{ transform: translateY(-7px) rotate(-45deg); }
+}
+
 /* ===== buttons ===== */
 .btn{
   display: inline-flex; align-items: center; gap: 10px;
