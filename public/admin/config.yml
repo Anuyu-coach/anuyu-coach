@@ -9,7 +9,7 @@ backend:
   name: github
   # ⚠️ EDIT ME: replace with the GitHub repo you push this site to.
   # e.g. "anuyu/anuyu-coach"
-  repo: YOUR_GITHUB_USER/anuyu-coach
+  repo: anuyu-coach/anuyu-coach
   branch: main
   # Authentication: Sveltia uses GitHub OAuth. You need ONE small OAuth
   # proxy so the browser can complete the GitHub login. Two easy options:
